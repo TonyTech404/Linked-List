@@ -1,139 +1,105 @@
 class ComputerNode:
-    def __init__(self, computer_name, status):
-        self.computer_name = computer_name
+    def __init__(self, name, status):
+        self.name = name
         self.status = status
         self.next = None
 
 class LabNode:
     def __init__(self, lab_name):
         self.lab_name = lab_name
-        self.computer_list_head = None
+        self.computers = None
         self.next = None
 
 class StockNode:
-    def __init__(self, replacement_computers):
-        self.replacement_computers = replacement_computers
+    def __init__(self):
+        self.replacements = 0
         self.next = None
 
-class LinkedList:
+class LabLinkedList:
     def __init__(self):
         self.head = None
+        self.stock = 0
 
-    def insert_lab(self, lab_name, computer_info):
-        """
-        Here, we insert information about the laboratory.
-        """
+    def add_lab(self, lab_name):
         new_lab = LabNode(lab_name)
-        for computer in computer_info:
-            computer_name, status = computer
-            new_computer = ComputerNode(computer_name, status)
-            if new_lab.computer_list_head is None:
-                new_lab.computer_list_head = new_computer
-            else:
-                current = new_lab.computer_list_head
-                while current.next:
-                    current = current.next
-                current.next = new_computer
-        if self.head is None:
+        if not self.head:
             self.head = new_lab
         else:
-            current = self.head
-            while current.next:
-                current = current.next
-            current.next = new_lab
+            current_lab = self.head
+            while current_lab.next:
+                current_lab = current_lab.next
+            current_lab.next = new_lab
 
-    def count_working_computers(self):
-        """
-        Let's count the working computers in each laboratory.
-        """
-        total_working = 0
+    def add_computer(self, lab_name, computer_name, status):
+        new_computer = ComputerNode(computer_name, status)
         current_lab = self.head
         while current_lab:
-            current_computer = current_lab.computer_list_head
-            while current_computer:
-                if current_computer.status == 'Working':
-                    total_working += 1
-                current_computer = current_computer.next
-            current_lab = current_lab.next
-        return total_working
-
-    def count_replacement_needed(self):
-        """
-        Count the computers needing replacement in each laboratory.
-        """
-        total_replacement_needed = 0
-        current_lab = self.head
-        while current_lab:
-            current_computer = current_lab.computer_list_head
-            while current_computer:
-                if current_computer.status == 'Needs Replacement':
-                    total_replacement_needed += 1
-                current_computer = current_computer.next
-            current_lab = current_lab.next
-        return total_replacement_needed
-
-    def check_stock_availability(self, total_replacement_needed, stock_inventory):
-        """
-        Check if we have enough stock for the needed replacements.
-        """
-        return total_replacement_needed <= stock_inventory
-
-    def insert_replacement_computers(self, stock_inventory):
-        """
-        Insert replacement computers if available.
-        """
-        current_lab = self.head
-        while current_lab:
-            current_computer = current_lab.computer_list_head
-            while current_computer:
-                if current_computer.status == 'Needs Replacement' and stock_inventory > 0:
-                    replacement_choice = input(f"Please choose a replacement computer for {current_computer.computer_name} from the stock inventory: ")
-                    new_computer = ComputerNode(replacement_choice, "Working")
-                    new_computer.next = current_computer.next
-                    current_computer.next = new_computer
-                    stock_inventory -= 1
-                current_computer = current_computer.next
-            current_lab = current_lab.next
-
-    def display_info(self):
-        """
-        Display information about each laboratory and stock inventory.
-        """
-        current_lab = self.head
-        while current_lab:
-            print("Lab Name:", current_lab.lab_name)
-            current_computer = current_lab.computer_list_head
-            working_count = 0
-            needs_replacement_count = 0
-            while current_computer:
-                if current_computer.status == 'Working':
-                    working_count += 1
+            if current_lab.lab_name == lab_name:
+                if not current_lab.computers:
+                    current_lab.computers = new_computer
                 else:
-                    needs_replacement_count += 1
-                current_computer = current_computer.next
-            print("Total Working Computers:", working_count)
-            print("Total Computers Needing Replacement:", needs_replacement_count)
+                    current_computer = current_lab.computers
+                    while current_computer.next:
+                        current_computer = current_computer.next
+                    current_computer.next = new_computer
+                break
             current_lab = current_lab.next
 
+    def display_labs(self):
+        current_lab = self.head
+        while current_lab:
+            print(f"Lab Name: {current_lab.lab_name}")
+            current_computer = current_lab.computers
+            while current_computer:
+                print(f"Computer Name: {current_computer.name}, Status: {current_computer.status}")
+                current_computer = current_computer.next
+            current_lab = current_lab.next
+
+    def add_replacements(self, count):
+        self.stock = count
+
+    def replace_computer(self):
+        current_lab = self.head
+        while current_lab:
+            current_computer = current_lab.computers
+            while current_computer:
+                if current_computer.status == "Needs Replacement":
+                    print(f"Computer {current_computer.name} in {current_lab.lab_name} needs replacement.")
+                    replace = input("Do you want to replace it? (yes/no): ").lower()
+                    if replace == "yes" and self.stock > 0:
+                        current_computer.status = "Working"
+                        self.stock -= 1
+                        print(f"Computer {current_computer.name} replaced successfully.")
+                        print(f"Total available replacements in stock room: {self.stock}")
+                    elif replace == "yes" and self.stock <= 0:
+                        print("Sorry, no replacement available in stock.")
+                    else:
+                        print("Computer not replaced.")
+                current_computer = current_computer.next
+            current_lab = current_lab.next
 
 # Example usage:
-lab_inventory = LinkedList()
+
+lab_list = LabLinkedList()
 
 # Technician input
-lab_inventory.insert_lab("Clab1", [("PC1", "Working"), ("PC2", "Needs Replacement")])
-lab_inventory.insert_lab("Clab2", [("PC3", "Working"), ("PC4", "Working")])
-lab_inventory.insert_lab("Maclab", [("Mac1", "Working"), ("Mac2", "Needs Replacement")])
+lab_list.add_lab("Lab1")
+lab_list.add_computer("Lab1", "PC1", "Working")
+lab_list.add_computer("Lab1", "PC2", "Needs Replacement")
 
-# Get total replacement needed
-total_replacement_needed = lab_inventory.count_replacement_needed()
+lab_list.add_lab("Lab2")
+lab_list.add_computer("Lab2", "PC1", "Needs Replacement")
+lab_list.add_computer("Lab2", "PC2", "Working")
 
-# Check stock availability
-stock_inventory = 5  # Example stock inventory
-stock_available = lab_inventory.check_stock_availability(total_replacement_needed, stock_inventory)
+lab_list.add_replacements(5)  # Stock room availability
 
-if stock_available:
-    # Insert replacement computers
-    lab_inventory.insert_replacement_computers(stock_inventory)
+# Display lab information before replacement
+print("Lab Information Before Replacement:")
+lab_list.display_labs()
 
-# Display lab information
-lab_inventory.display_info()
+# Replace computers if needed
+lab_list.replace_computer()
+
+# Display lab information after replacement
+print("\nLab Information After Replacement:")
+lab_list.display_labs()
